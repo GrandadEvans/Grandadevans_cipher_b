@@ -275,8 +275,8 @@ plot(showStochasticRSI ? STOCHosLevel2 : na, color=stochOSColor, linewidth=stoch
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Plot bullish and bearish divergences for WaveTrend //
-plotchar(series=bullishWTDivergence and showMajorDivergence, location=location.bottom, color=color.rgb(0, 255, 8), size=size.tiny, text="Bottom", textcolor=textColor, title="Potential TOP", char=bottomSymbol)
-plotchar(series=bearishWTDivergence and showMajorDivergence, location=location.top, color=color.rgb(255, 0, 0), size= size.tiny , text="Top", textcolor=textColor, title="Potential BOTTOM", char=topSymbol)
+plotchar(series=bullishWTDivergence and showMajorDivergence, location=location.belowbar, color=color.rgb(0, 255, 8), size=size.small, text="Bottom", textcolor=textColor, title="Potential TOP", char=bottomSymbol, force_overlay = true)
+plotchar(series=bearishWTDivergence and showMajorDivergence, location=location.abovebar, color=color.rgb(255, 0, 0), size= size.small , text="Top", textcolor=textColor, title="Potential BOTTOM", char=topSymbol, force_overlay = true)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -298,19 +298,19 @@ var box profitBox = na
 var box stopLossBox = na
 
 if (bar_index > (bar_index - maxBarsBack))
-    if (bearishWTDivergence)
-        strategy.entry("Buy", strategy.long, limit=close, stop=(close / orderPercentage))
-        strategy.exit("Buy", "Buy", profit=(close * orderPercentage), loss=(close / orderPercentage))
-        tradeBox := box.new(time, ((close * orderPercentage - 3)), time + 60*60, ((close / orderPercentage + 3)), xloc=xloc.bar_time, force_overlay=true, border_width=6, bgcolor=color.rgb(0,0,0,100))
-        profitBox := box.new(bar_index, (close * orderPercentage), (bar_index + 1), close, xloc=xloc.bar_index, force_overlay = true, bgcolor = color.rgb(0, 233, 0, 80), border_width=0)
+    if (bearishWTDivergence) // Top reached
+        strategy.entry("Sell", strategy.short, limit=close)
+        strategy.exit("Sell", "Sell", profit=(close / orderPercentage), loss=(close * orderPercentage))
+        tradeBox := box.new(time, ((close * orderPercentage - 1)), time + 60*60, ((close / orderPercentage + 1)), xloc=xloc.bar_time, force_overlay=true, border_width=2, bgcolor=color.rgb(0,0,0,100))
+        profitBox := box.new(bar_index, close, (bar_index + 1), (close / orderPercentage), xloc=xloc.bar_index, force_overlay = true, bgcolor = color.rgb(0, 233, 0, 80), border_width=0)
+        stopLossBox := box.new(bar_index, (close * orderPercentage), (bar_index + 1), close, xloc=xloc.bar_index, force_overlay = true, bgcolor = color.rgb(233, 0, 0, 80), border_width=0)
+    
+    if (bullishWTDivergence) //Bottom reached
+        strategy.entry("Buy", strategy.long, limit=close)
+        strategy.exit("Buy", "Buy", loss=(close / orderPercentage), profit=(close * orderPercentage))
+        tradeBox := box.new(time, ((close * orderPercentage - 1)), time + 60*60, ((close / orderPercentage + 1)), xloc=xloc.bar_time, force_overlay=true, border_width=2, bgcolor=color.rgb(0,0,0,100))
         stopLossBox := box.new(bar_index, close, (bar_index + 1), (close / orderPercentage), xloc=xloc.bar_index, force_overlay = true, bgcolor = color.rgb(233, 0, 0, 80), border_width=0)
-
-    if (bullishWTDivergence)
-        strategy.entry("Sell", strategy.long, limit=close, stop=(close / orderPercentage))
-        strategy.exit("Sell", "Sell", loss=(close * orderPercentage), profit=(close / orderPercentage))
-        tradeBox := box.new(time, ((close * orderPercentage - 3)), time + 60*60, ((close / orderPercentage + 3)), xloc=xloc.bar_time, force_overlay=true, border_width=6, bgcolor=color.rgb(0,0,0,100))
-        stopLossBox := box.new(bar_index, (close / orderPercentage), (bar_index + 1), close, xloc=xloc.bar_index, force_overlay = true, bgcolor = color.rgb(233, 0, 0, 80), border_width=0)
-        profitBox := box.new(bar_index, close, (bar_index + 1), (close * orderPercentage), xloc=xloc.bar_index, force_overlay = true, bgcolor = color.rgb(0, 233, 0, 80), border_width=0)
+        profitBox := box.new(bar_index, (close * orderPercentage), (bar_index + 1), close, xloc=xloc.bar_index, force_overlay = true, bgcolor = color.rgb(0, 233, 0, 80), border_width=0)
 
     // After trade closes
     if (strategy.closedtrades > 0)
@@ -324,7 +324,7 @@ if (bar_index > (bar_index - maxBarsBack))
             // stretch box to that bar
             box.set_right(profitBox, bar_index + 1)
             box.set_right(stopLossBox, bar_index + 1)
-            box.set_right(tradeBox, lastExitTime + 3)
+            box.set_right(tradeBox, lastExitTime + 1)
 
             // set border color based on success/failure
             box.set_border_color(tradeBox, lastProfit > 0 ? color.green : color.red)
